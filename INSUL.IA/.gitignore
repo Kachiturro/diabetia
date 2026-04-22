@@ -1,0 +1,27 @@
+# macOS
+.DS_Store
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Build outputs
+dist/
+build/
+coverage/
+
+# Local databases and volumes
+mysql-data/
+api_pagina/mysql-data/
+
+# IDE
+.vscode/
+.idea/
