@@ -1,0 +1,141 @@
+TUTORIAL: Levantar Insulinia con Docker Desktop en macOS
+=========================================================
+
+Este tutorial te ayuda a correr:
+1) Base de datos MySQL
+2) API backend (Node/TypeScript)
+3) Frontend (Vue/Vite)
+4) Servicio de IA (diabetes_ai_web)
+
+Todo usando Docker Desktop en Mac.
+
+
+REQUISITOS
+----------
+1. Tener instalado Docker Desktop.
+2. Abrir Docker Desktop y esperar a que diga "Engine running".
+3. Tener libre estos puertos:
+   - 3306 (MySQL)
+   - 3000 (API)
+   - 5173 (Frontend)
+
+
+RUTA DEL PROYECTO
+-----------------
+En este caso el proyecto esta en:
+/Users/kachiturro/diabetia/Insulinia-App-main
+
+
+PASO 1: Abrir terminal en la carpeta del proyecto
+-------------------------------------------------
+cd /Users/kachiturro/diabetia/Insulinia-App-main
+
+
+PASO 2: Construir y levantar contenedores
+-----------------------------------------
+docker compose up --build
+
+Esto levanta:
+- db (MySQL)
+- api (backend)
+- frontend (Vite)
+
+Importante:
+La API llama al modelo de IA en `http://host.docker.internal:8000`.
+Por eso debes levantar `diabetes_ai_web` en tu Mac (host), en puerto 8000.
+
+Comandos en otra terminal:
+cd /Users/kachiturro/diabetia/diabetes_ai_web
+docker build -t diabetes-ai-web .
+docker run --rm -p 8000:8000 diabetes-ai-web
+
+Si quieres dejarlo corriendo en segundo plano:
+docker compose up --build -d
+
+
+PASO 3: Verificar en Docker Desktop (interfaz grafica)
+------------------------------------------------------
+1. Abre Docker Desktop.
+2. Ve a la seccion "Containers".
+3. Debes ver estos contenedores "running":
+   - insulinia_db
+   - insulinia_api
+   - insulinia_frontend
+4. Si uno falla, abre su pestaña "Logs" para ver el error.
+
+
+PASO 4: Probar que todo responde
+--------------------------------
+1. API health check:
+   http://localhost:3000/api/health
+
+2. Frontend:
+   http://localhost:5173
+
+3. IA health check:
+   http://localhost:8000/health
+
+Si ambos abren, la integracion esta correcta.
+
+
+PASO 5: Uso normal de la app
+----------------------------
+1. Entra al frontend.
+2. Registrate.
+3. Inicia sesion.
+4. Registra un paciente.
+5. Crea una evaluacion.
+6. Verifica que aparezca en perfil y detalle.
+
+
+COMANDOS UTILES
+---------------
+Ver estado:
+docker compose ps
+
+Ver logs de todos:
+docker compose logs -f
+
+Ver logs de solo API:
+docker compose logs -f api
+
+Reiniciar solo API:
+docker compose restart api
+
+Detener todo:
+docker compose down
+
+Detener y borrar volumenes (limpia DB):
+docker compose down -v
+
+
+ERRORES COMUNES
+--------------
+1) Puerto ocupado (port is already allocated)
+   - Cierra procesos que usen 3000, 3306 o 5173.
+   - O cambia puertos en docker-compose.yml.
+
+2) MySQL no conecta (ECONNREFUSED)
+   - Espera unos segundos mas: MySQL tarda en iniciar.
+   - Revisa logs:
+     docker compose logs -f db
+
+3) Cambiaste SQL y no se refleja
+   - El script database.sql se ejecuta al crear la DB por primera vez.
+   - Para recrear desde cero:
+     docker compose down -v
+     docker compose up --build
+
+4) Error 401 en rutas protegidas
+   - Cierra sesion y vuelve a iniciar para refrescar token.
+
+
+FLUJO RECOMENDADO DIARIO
+------------------------
+1. Abrir Docker Desktop.
+2. En terminal:
+   cd /Users/kachiturro/diabetia/Insulinia-App-main
+   docker compose up -d
+3. Trabajar en http://localhost:5173
+4. Al terminar:
+   docker compose down

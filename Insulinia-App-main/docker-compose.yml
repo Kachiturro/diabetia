@@ -1,0 +1,59 @@
+services:
+  # ----------------------------------------
+  # 1. BASE DE DATOS (MySQL)
+  # ----------------------------------------
+  db:
+    image: mysql:8.0
+    container_name: insulinia_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: insulinia_db
+    ports:
+      - '3306:3306'
+    volumes:
+      - ./backend/database.sql:/docker-entrypoint-initdb.d/database.sql
+    # MAGIA: Le decimos a Docker que verifique constantemente si MySQL ya despertó
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
+      timeout: 20s
+      retries: 10
+
+  # ----------------------------------------
+  # 2. BACKEND (API Node.js)
+  # ----------------------------------------
+  api:
+    build: ./backend/api_pagina
+    container_name: insulinia_api
+    restart: always
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+      - 'docker.for.mac.host.internal:host-gateway'
+    ports:
+      - '3000:3000'
+    environment:
+      - PORT=3000
+      - DB_HOST=db
+      - DB_USER=root
+      - DB_PASSWORD=rootpassword
+      - DB_NAME=insulinia_db
+      - DB_PORT=3306 # Forzamos el puerto correcto ignorando el .env
+      - IA_API_URL=http://host.docker.internal:8000
+      - IA_PREDICT_PATH=/predict/ensemble
+      - IA_TIMEOUT_MS=10000
+    depends_on:
+      db:
+        # MAGIA: La API no arrancará hasta que el healthcheck de arriba diga que la DB está lista
+        condition: service_healthy
+
+  # ----------------------------------------
+  # 3. FRONTEND (Vue.js)
+  # ----------------------------------------
+  frontend:
+    build: .
+    container_name: insulinia_frontend
+    restart: always
+    ports:
+      - '5173:5173'
+    depends_on:
+      - api
