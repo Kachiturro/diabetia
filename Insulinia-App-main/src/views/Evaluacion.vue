@@ -70,14 +70,31 @@
             </div>
 
             <div class="form-group">
-              <span>IMC (Índice de Masa Corporal)</span>
+              <span>Estatura (cm)</span>
               <input
                 type="number"
                 step="0.1"
-                v-model.number="formulario.bmi"
-                placeholder="Ej. 25.5"
+                v-model.number="formulario.estaturaCm"
+                placeholder="Ej. 165"
                 required
               />
+            </div>
+
+            <div class="form-group">
+              <span>Peso (kg)</span>
+              <input
+                type="number"
+                step="0.1"
+                v-model.number="formulario.pesoKg"
+                placeholder="Ej. 68.5"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <span>IMC (calculado automáticamente)</span>
+              <input type="text" :value="bmiCalculadoTexto" class="readonly-input" readonly />
+              <p class="field-note">Fórmula: peso (kg) / estatura² (m)</p>
             </div>
 
             <div class="form-group">
@@ -91,8 +108,11 @@
             </div>
 
             <div class="form-group">
-              <span>Edad (Años)</span>
-              <input type="number" v-model.number="formulario.edad" placeholder="Ej. 45" required />
+              <span>Edad (calculada por fecha de nacimiento)</span>
+              <input type="text" :value="edadPacienteTexto" class="readonly-input" readonly />
+              <p v-if="pacienteSeleccionado" class="field-note">
+                Fecha de nacimiento: {{ fechaNacimientoPacienteTexto }}
+              </p>
             </div>
 
             <div v-if="esPacienteFemenino" class="form-group">
@@ -123,8 +143,7 @@
           <div class="family-history-box">
             <span>Antecedentes familiares de diabetes</span>
             <p class="field-note">
-              Añade familiares con diabetes y calculamos automáticamente el pedigrí usando la escala
-              del dataset de entrenamiento.
+              Añade familiares con diabetes para considerar los antecedentes en la evaluación.
             </p>
 
             <div v-if="formulario.familiaresConDiabetes.length === 0" class="empty-family-list">
@@ -157,11 +176,6 @@
             <button type="button" class="btn-add-family" @click="agregarFamiliarConDiabetes">
               + Añadir familiar con diabetes
             </button>
-
-            <div class="pedigree-preview">
-              <span>Función de pedigrí calculada</span>
-              <strong>{{ diabetesPedigreeCalculado.toFixed(3) }}</strong>
-            </div>
           </div>
 
           <button
@@ -205,6 +219,8 @@ const route = useRoute()
 const PEDIGREE_MIN = 0.078
 const PEDIGREE_MAX = 2.42
 const PEDIGREE_CURVE = 0.18
+const AGE_MIN_SUPPORTED = 21
+const AGE_MAX_SUPPORTED = 81
 
 const parentescosFamiliarOptions = [
   { value: 'madre', label: 'Madre' },
@@ -230,9 +246,9 @@ const formulario = ref({
   pacienteID: '',
   glucosa: null,
   presionSangina: null,
-  bmi: null,
+  estaturaCm: null,
+  pesoKg: null,
   insulina: null,
-  edad: null,
   embarazos: 0,
   familiaresConDiabetes: [],
 })
@@ -288,6 +304,68 @@ const pacienteSeleccionado = computed(() => {
 })
 
 const esPacienteFemenino = computed(() => pacienteSeleccionado.value?.sexo === 'F')
+
+const bmiCalculado = computed(() => {
+  const pesoKg = Number(formulario.value.pesoKg)
+  const estaturaCm = Number(formulario.value.estaturaCm)
+
+  if (!Number.isFinite(pesoKg) || !Number.isFinite(estaturaCm) || pesoKg <= 0 || estaturaCm <= 0) {
+    return null
+  }
+
+  const estaturaM = estaturaCm / 100
+  const bmi = pesoKg / (estaturaM * estaturaM)
+  return Number(bmi.toFixed(1))
+})
+
+const bmiCalculadoTexto = computed(() => {
+  if (bmiCalculado.value === null) {
+    return 'Captura peso y estatura'
+  }
+  return `${bmiCalculado.value}`
+})
+
+const calcularEdadDesdeFechaNacimiento = (fechaNacimiento = '') => {
+  const [anio, mes, dia] = String(fechaNacimiento).split('T')[0].split('-').map(Number)
+
+  if (![anio, mes, dia].every(Number.isFinite)) {
+    return null
+  }
+
+  const hoy = new Date()
+  let edad = hoy.getFullYear() - anio
+  const mesActual = hoy.getMonth() + 1
+  const diaActual = hoy.getDate()
+
+  if (mesActual < mes || (mesActual === mes && diaActual < dia)) {
+    edad -= 1
+  }
+
+  return edad >= 0 ? edad : null
+}
+
+const edadPacienteCalculada = computed(() =>
+  calcularEdadDesdeFechaNacimiento(pacienteSeleccionado.value?.fechaNacimiento),
+)
+
+const edadPacienteTexto = computed(() => {
+  if (edadPacienteCalculada.value === null) {
+    return 'Selecciona un paciente'
+  }
+  return `${edadPacienteCalculada.value} años`
+})
+
+const fechaNacimientoPacienteTexto = computed(() => {
+  const [anio, mes, dia] = String(pacienteSeleccionado.value?.fechaNacimiento || '')
+    .split('T')[0]
+    .split('-')
+
+  if (!anio || !mes || !dia) {
+    return 'No disponible'
+  }
+
+  return `${dia}/${mes}/${anio}`
+})
 
 const diabetesPedigreeCalculado = computed(() =>
   calcularPedigreeDesdeFamiliares(formulario.value.familiaresConDiabetes),
@@ -346,12 +424,32 @@ const analizarDatos = async () => {
   errorMsg.value = ''
 
   try {
+    const bmi = bmiCalculado.value
+    if (!Number.isFinite(bmi)) {
+      throw new Error('No se pudo calcular IMC. Verifica peso y estatura.')
+    }
+    if (bmi < 10 || bmi > 60) {
+      throw new Error('El IMC calculado está fuera del rango permitido (10-60).')
+    }
+
+    const edadCalculada = edadPacienteCalculada.value
+    if (!Number.isFinite(edadCalculada)) {
+      throw new Error('No se pudo calcular la edad a partir de la fecha de nacimiento del paciente.')
+    }
+    if (edadCalculada < AGE_MIN_SUPPORTED || edadCalculada > AGE_MAX_SUPPORTED) {
+      throw new Error(
+        `La edad calculada (${edadCalculada} años) está fuera del rango soportado por el modelo (${AGE_MIN_SUPPORTED}-${AGE_MAX_SUPPORTED}).`,
+      )
+    }
+
     const token = localStorage.getItem('token')
     const payload = {
       ...formulario.value,
       pacienteID: Number(formulario.value.pacienteID),
+      bmi,
       embarazos: esPacienteFemenino.value ? Number(formulario.value.embarazos || 0) : 0,
       diabetesPedigree: diabetesPedigreeCalculado.value,
+      edad: edadCalculada,
     }
 
     // Petición a la ruta que definimos en prediccion.routes.ts
@@ -460,24 +558,10 @@ const verificarNuevoPaciente = () => {
   cursor: pointer;
 }
 
-.pedigree-preview {
-  margin-top: 14px;
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: #eef4ff;
-  border: 1px solid #d2e1ff;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.pedigree-preview span {
-  color: #30518b;
-}
-
-.pedigree-preview strong {
-  font-size: 20px;
-  color: #0d47a1;
+.readonly-input {
+  background: #f3f5f8;
+  color: #526174;
+  cursor: not-allowed;
 }
 
 @media (max-width: 640px) {

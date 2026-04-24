@@ -15,7 +15,11 @@ export const datosClinicosSchema = z.object({
       }),
     )
     .optional(),
-  edad: z.number().min(21, "Edad fuera del rango soportado").max(81, "Edad fuera del rango soportado"),
+  edad: z
+    .number()
+    .min(21, "Edad fuera del rango soportado")
+    .max(81, "Edad fuera del rango soportado")
+    .optional(),
 });
 
 export type DatosClinicosInput = z.infer<typeof datosClinicosSchema>;

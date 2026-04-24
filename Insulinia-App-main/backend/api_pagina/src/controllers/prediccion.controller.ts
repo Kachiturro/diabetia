@@ -7,6 +7,8 @@ import iaService from '../services/ia.service'
 const PEDIGREE_MIN = 0.078
 const PEDIGREE_MAX = 2.42
 const PEDIGREE_CURVE = 0.18
+const AGE_MIN_SUPPORTED = 21
+const AGE_MAX_SUPPORTED = 81
 
 const normalizarTexto = (valor: string): string =>
   valor
@@ -71,7 +73,6 @@ export const registrarDatosClinicos = async (req: AuthRequest, res: Response): P
       insulina,
       bmi,
       diabetesPedigree,
-      edad,
       familiaresConDiabetes,
     } = req.body
 
@@ -79,15 +80,17 @@ export const registrarDatosClinicos = async (req: AuthRequest, res: Response): P
       pacienteID === undefined ||
       glucosa === undefined ||
       presionSangina === undefined ||
-      bmi === undefined ||
-      edad === undefined
+      bmi === undefined
     ) {
       res.status(400).json({ success: false, message: 'Faltan campos requeridos' })
       return
     }
 
     const [pacienteRows] = await pool.execute<RowDataPacket[]>(
-      `SELECT pacienteID, sexo
+      `SELECT
+         pacienteID,
+         sexo,
+         TIMESTAMPDIFF(YEAR, fechaNacimiento, CURDATE()) as edadCalculada
        FROM UsuarioSecundario
        WHERE pacienteID = ? AND usuarioPrincipalID = ?
        LIMIT 1`,
@@ -101,6 +104,23 @@ export const registrarDatosClinicos = async (req: AuthRequest, res: Response): P
 
     const sexoPaciente = String(pacienteRows[0].sexo || '').toUpperCase()
     const esPacienteFemenino = sexoPaciente === 'F'
+    const edadCalculada = Number(pacienteRows[0].edadCalculada)
+
+    if (!Number.isFinite(edadCalculada)) {
+      res
+        .status(400)
+        .json({ success: false, message: 'No se pudo calcular la edad del paciente.' })
+      return
+    }
+
+    if (edadCalculada < AGE_MIN_SUPPORTED || edadCalculada > AGE_MAX_SUPPORTED) {
+      res.status(400).json({
+        success: false,
+        message: `La edad calculada (${edadCalculada}) está fuera del rango soportado por el modelo (${AGE_MIN_SUPPORTED}-${AGE_MAX_SUPPORTED}).`,
+      })
+      return
+    }
+
     const pedigreeManual = Number(diabetesPedigree)
     const familiaresArray = Array.isArray(familiaresConDiabetes) ? familiaresConDiabetes : []
     const pedigreeCalculado = calcularPedigreeDesdeFamiliares(familiaresArray)
@@ -117,7 +137,7 @@ export const registrarDatosClinicos = async (req: AuthRequest, res: Response): P
           : Number.isFinite(pedigreeManual) && pedigreeManual > 0
             ? pedigreeManual
             : PEDIGREE_MIN,
-      edad: Number(edad),
+      edad: edadCalculada,
     }
 
     const invalidPayload = Object.values(payloadIA).some((value) => !Number.isFinite(value))

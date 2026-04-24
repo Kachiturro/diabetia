@@ -12,7 +12,8 @@ services:
     ports:
       - '3306:3306'
     volumes:
-      - ./backend/database.sql:/docker-entrypoint-initdb.d/database.sql
+      - mysql_data:/var/lib/mysql
+      - ./backend/database.sql:/docker-entrypoint-initdb.d/database.sql:ro
     # MAGIA: Le decimos a Docker que verifique constantemente si MySQL ya despertó
     healthcheck:
       test: ['CMD', 'mysqladmin', 'ping', '-h', 'localhost']
@@ -20,7 +21,28 @@ services:
       retries: 10
 
   # ----------------------------------------
-  # 2. BACKEND (API Node.js)
+  # 2. IA (FastAPI - diabetes_ai_web)
+  # ----------------------------------------
+  ia:
+    build: ../diabetes_ai_web
+    container_name: insulinia_ia
+    restart: always
+    ports:
+      - '8000:8000'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'python',
+          '-c',
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=3)",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 8
+
+  # ----------------------------------------
+  # 3. BACKEND (API Node.js)
   # ----------------------------------------
   api:
     build: ./backend/api_pagina
@@ -31,23 +53,30 @@ services:
       - 'docker.for.mac.host.internal:host-gateway'
     ports:
       - '3000:3000'
+    command: npm run dev
+    volumes:
+      - ./backend/api_pagina:/app
+      - /app/node_modules
     environment:
+      - NODE_ENV=development
       - PORT=3000
       - DB_HOST=db
       - DB_USER=root
       - DB_PASSWORD=rootpassword
       - DB_NAME=insulinia_db
       - DB_PORT=3306 # Forzamos el puerto correcto ignorando el .env
-      - IA_API_URL=http://host.docker.internal:8000
+      - IA_API_URL=http://ia:8000
       - IA_PREDICT_PATH=/predict/ensemble
       - IA_TIMEOUT_MS=10000
     depends_on:
       db:
         # MAGIA: La API no arrancará hasta que el healthcheck de arriba diga que la DB está lista
         condition: service_healthy
+      ia:
+        condition: service_healthy
 
   # ----------------------------------------
-  # 3. FRONTEND (Vue.js)
+  # 4. FRONTEND (Vue.js)
   # ----------------------------------------
   frontend:
     build: .
@@ -55,5 +84,14 @@ services:
     restart: always
     ports:
       - '5173:5173'
+    command: npm run dev -- --host 0.0.0.0 --port 5173
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    environment:
+      - CHOKIDAR_USEPOLLING=true
     depends_on:
       - api
+
+volumes:
+  mysql_data:

@@ -50,10 +50,6 @@
                   <span>Insulina</span>
                   <strong>{{ registro.insulina }} <small>mu U/ml</small></strong>
                 </div>
-                <div class="data-box">
-                  <span>Pedigrí</span>
-                  <strong>{{ registro.diabetesPedigree }}</strong>
-                </div>
                 <div v-if="mostrarEmbarazos" class="data-box">
                   <span>Embarazos</span>
                   <strong>{{ registro.embarazos }}</strong>

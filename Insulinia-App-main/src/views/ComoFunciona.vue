@@ -28,7 +28,7 @@
       <div class="step-card">
         <div class="step-icon"><i class="fas fa-file-medical"></i></div>
         <h3>1. Ingreso de Datos</h3>
-        <p>El usuario introduce 8 variables clave de su historial médico (glucosa, IMC, edad, etc.), los mismos indicadores que los médicos utilizan para una evaluación inicial.</p>
+        <p>El usuario introduce variables clínicas clave (glucosa, IMC, presión, etc.) y la edad se calcula automáticamente a partir de la fecha de nacimiento del paciente.</p>
       </div>
 
       <div class="step-arrow">➜</div>

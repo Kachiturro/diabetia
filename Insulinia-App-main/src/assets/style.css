@@ -26,15 +26,79 @@ body {
   font-weight: 700;
 }
 
+.header nav {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
 .header nav a {
   color: white;
-  margin-left: 30px;
   text-decoration: none;
   font-weight: 500;
 }
 
 .header nav a:hover {
   text-decoration: underline;
+}
+
+.session-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(15, 43, 89, 0.32);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  padding: 7px 13px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.session-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #5cff93;
+  box-shadow: 0 0 0 4px rgba(92, 255, 147, 0.18);
+}
+
+@media (max-width: 900px) {
+  .header {
+    padding: 16px 22px;
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+
+  .header nav {
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .header nav a {
+    font-size: 14px;
+  }
+
+  .session-status {
+    font-size: 12px;
+    padding: 6px 11px;
+  }
+}
+
+@media (max-width: 540px) {
+  .header nav {
+    width: 100%;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .btn-account,
+  .session-status {
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 /* ================= BUTTONS ================= */
@@ -879,6 +943,8 @@ footer {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  text-decoration: none;
+  white-space: nowrap;
 }
 
 .profile-section {
@@ -997,6 +1063,17 @@ footer {
   color: #0d47a1;
 }
 
+.dashboard-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-refresh {
+  background: #f0f0f0;
+  border: none;
+  cursor: pointer;
+}
+
 .btn-new-record {
   background: #ff7a00;
   color: white;
@@ -1078,6 +1155,18 @@ footer {
   color: white;
 }
 
+.btn-view-record {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.patient-role-text {
+  font-size: 12px;
+  color: #777;
+}
+
 /* RESPONSIVO */
 @media (max-width: 900px) {
   .profile-container {
@@ -1086,6 +1175,104 @@ footer {
   .user-card {
     width: 100%;
     position: static;
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboard-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .dashboard-header h2 {
+    font-size: 22px;
+  }
+
+  .dashboard-actions {
+    width: 100%;
+  }
+
+  .btn-refresh {
+    flex-shrink: 0;
+  }
+
+  .btn-new-record {
+    flex: 1;
+    text-align: center;
+  }
+
+  .records-table-wrapper {
+    padding: 12px;
+    border-radius: 14px;
+  }
+
+  .records-table thead {
+    display: none;
+  }
+
+  .records-table,
+  .records-table tbody,
+  .records-table tr,
+  .records-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .records-table tr {
+    background: #f9fbff;
+    border: 1px solid #e6edf7;
+    border-radius: 14px;
+    margin-bottom: 12px;
+    padding: 6px 0;
+  }
+
+  .records-table tr:last-child {
+    margin-bottom: 0;
+  }
+
+  .records-table td {
+    border-bottom: 1px solid #eaf0f8;
+    padding: 10px 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    text-align: right;
+    font-size: 14px;
+  }
+
+  .records-table td::before {
+    content: attr(data-label);
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: #72829a;
+    font-weight: 700;
+    text-align: left;
+  }
+
+  .records-table td[data-label='Paciente'] {
+    align-items: flex-start;
+    flex-direction: column;
+    text-align: left;
+  }
+
+  .records-table td[data-label='Paciente']::before {
+    margin-bottom: 4px;
+  }
+
+  .records-table td[data-label='Resultado'] {
+    justify-content: space-between;
+  }
+
+  .records-table td[data-label='Acción'] {
+    justify-content: flex-end;
+    border-bottom: none;
+  }
+
+  .records-table td[data-label='Acción']::before {
+    content: '';
   }
 }
 
@@ -1527,4 +1714,38 @@ footer {
 .login-logo img {
   width: 250px;
   opacity: 0.95;
+}
+
+@media (max-width: 768px) {
+  .login-bg {
+    align-items: flex-start;
+    padding: 80px 16px 24px;
+  }
+
+  .login-topbar {
+    padding: 14px 16px;
+  }
+
+  .back-home {
+    font-size: 13px;
+    padding: 8px 12px;
+  }
+
+  .login-card {
+    width: 100%;
+    max-width: 440px;
+    padding: 28px 20px;
+    border-radius: 16px;
+  }
+
+  .login-logo img {
+    width: 190px;
+  }
+
+  .options {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 13px;
+  }
 }

@@ -42,19 +42,11 @@
         <div class="dashboard-content">
           <div class="dashboard-header">
             <h2>Mis Registros Clínicos</h2>
-            <div style="display: flex; gap: 10px">
-              <button
-                @click="cargarDatosDashboard"
-                class="btn-icon"
-                style="background: #f0f0f0; border: none; cursor: pointer"
-              >
+            <div class="dashboard-actions">
+              <button @click="cargarDatosDashboard" class="btn-icon btn-refresh">
                 <i class="fas fa-sync-alt"></i>
               </button>
-              <router-link
-                to="/evaluacion"
-                class="btn-new-record"
-                style="display: inline-block; text-decoration: none"
-              >
+              <router-link to="/evaluacion" class="btn-new-record">
                 <i class="fas fa-plus"></i> Nuevo Diagnóstico
               </router-link>
             </div>
@@ -91,28 +83,19 @@
               </thead>
               <tbody>
                 <tr v-for="registro in historialMedico" :key="registro.id">
-                  <td>{{ registro.fecha }}</td>
-                  <td>
+                  <td data-label="Fecha">{{ registro.fecha }}</td>
+                  <td data-label="Paciente">
                     <strong>{{ registro.paciente }}</strong> <br />
-                    <span style="font-size: 12px; color: #777">{{ registro.rol }}</span>
+                    <span class="patient-role-text">{{ registro.rol }}</span>
                   </td>
-                  <td>{{ registro.glucosa }} mg/dL</td>
-                  <td>{{ registro.imc }}</td>
-                  <td>
+                  <td data-label="Glucosa">{{ registro.glucosa }} mg/dL</td>
+                  <td data-label="IMC">{{ registro.imc }}</td>
+                  <td data-label="Resultado">
                     <span v-if="registro.riesgoAlto" class="badge badge-danger">Alto Riesgo</span>
                     <span v-else class="badge badge-success">Bajo Riesgo</span>
                   </td>
-                  <td>
-                    <router-link
-                      :to="'/detalle/' + registro.id"
-                      class="btn-icon"
-                      style="
-                        display: inline-flex;
-                        align-items: center;
-                        justify-content: center;
-                        text-decoration: none;
-                      "
-                    >
+                  <td data-label="Acción">
+                    <router-link :to="'/detalle/' + registro.id" class="btn-icon btn-view-record">
                       <i class="fas fa-eye"></i>
                     </router-link>
                   </td>
