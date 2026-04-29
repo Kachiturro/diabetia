@@ -2,7 +2,6 @@
   embarazos: number;
   glucosa: number;
   presionSangina: number;
-  grosorPiel: number;
   insulina: number;
   bmi: number;
   diabetesPedigree: number;
@@ -20,8 +19,8 @@ export interface DatosClinicosInput {
   embarazos: number;
   glucosa: number;
   presionSangina: number;
-  grosorPiel: number;
   insulina: number;
   bmi: number;
   diabetesPedigree: number;
+  edad: number;
 }

@@ -1,34 +1,33 @@
 ﻿import { z } from "zod";
 
 export const loginSchema = z.object({
-  correo: z.string().email("Email inválido"),
-  password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres")
+  correo: z.string().email("Email inválido").trim(),
+  contraseña: z.string().min(6, "La contraseña debe tener al menos 6 caracteres")
 });
 
 export const registerPrincipalSchema = z.object({
   nombre: z.string()
     .min(2, "El nombre debe tener al menos 2 caracteres")
-    .max(100, "El nombre no puede exceder 100 caracteres"),
+    .max(100, "El nombre no puede exceder 100 caracteres")
+    .trim(),
   sexo: z.enum(["M", "F", "Otro"]),
-  fechaNacimiento: z.string().transform(str => new Date(str)),
-  domicilio: z.string().optional(),
-  celular: z.string().optional(),
-  correo: z.string().email("Email inválido"),
-  password: z.string()
-    .min(6, "La contraseña debe tener al menos 6 caracteres")
-    .regex(/[A-Z]/, "Debe contener al menos una mayúscula")
-    .regex(/[0-9]/, "Debe contener al menos un número")
+  fechaNacimiento: z.string().min(10, "Fecha inválida"),
+  domicilio: z.string().trim().optional(),
+  celular: z.string().trim().optional(),
+  correo: z.string().email("Email inválido").trim(),
+  contraseña: z.string().min(6, "La contraseña debe tener al menos 6 caracteres")
 });
 
 export const registerSecundarioSchema = z.object({
   nombre: z.string()
     .min(2, "El nombre debe tener al menos 2 caracteres")
-    .max(100, "El nombre no puede exceder 100 caracteres"),
+    .max(100, "El nombre no puede exceder 100 caracteres")
+    .trim(),
   sexo: z.enum(["M", "F", "Otro"]),
-  fechaNacimiento: z.string().transform(str => new Date(str)),
-  domicilio: z.string().optional(),
-  celular: z.string().optional(),
-  parentesco: z.string().optional()
+  fechaNacimiento: z.string().min(10, "Fecha inválida"),
+  domicilio: z.string().trim().optional(),
+  celular: z.string().trim().optional(),
+  parentesco: z.string().trim().optional()
 });
 
 export type LoginInput = z.infer<typeof loginSchema>;

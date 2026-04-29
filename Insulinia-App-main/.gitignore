@@ -46,3 +46,4 @@ backend/api_pagina/__pycache__/
 backend/api_pagina/*.pyc
 backend/api_pagina/.env
 backend/api_pagina/node_modules/
+.vercel
